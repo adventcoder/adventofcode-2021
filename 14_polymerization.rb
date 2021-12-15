@@ -40,7 +40,7 @@ def char_counts(polymer)
 end
 
 def answer(polymer)
-  a, b = char_counts(polymer).each_value.minmax
+  a, b = char_counts(polymer).values.minmax
   b - a
 end
 
