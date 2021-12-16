@@ -1,4 +1,5 @@
 require_relative 'framework'
+require_relative 'utils'
 
 def parse_grid(input)
   input.lines.map { |line| line.chomp.chars.map(&:to_i) }
@@ -20,33 +21,26 @@ def increase_cost(grid, n)
   grid.map { |row| row.map { |cost| (cost + n - 1) % 9 + 1 } }
 end
 
-def neighbours(pos)
-  x, y = pos
-  [[x, y - 1], [x - 1, y], [x + 1, y], [x, y + 1]]
-end
-
-def valid?(grid, pos)
-  x, y = pos
-  return y >= 0 && y < grid.size && x >= 0 && x < grid[y].size
-end
-
 def find_path(grid)
-  closed = {}
-  open = {}
-  open[[0, 0]] = 0
+  cost = Array.new(grid.size) { |y| Array.new(grid[y].size, Float::INFINITY) }
+  closed = Array.new(grid.size) { |y| Array.new(grid[y].size, false) }
+  open = Heap.new { |a, b| a[2] <=> b[2] }
+  cost[0][0] = 0
+  open << [0, 0, 0]
   until open.empty?
-    pos, cost = open.min { |a, b| a[1] <=> b[1] }
-    open.delete(pos)
-    closed[pos] = cost
-    if pos[1] == grid.size - 1 && pos[0] == grid[pos[1]].size - 1
-      return cost
+    x, y, _ = open.pop
+    next if closed[y][x]
+    closed[y][x] = true
+    if y == grid.size - 1 && x == grid[y].size - 1
+      return cost[y][x]
     else
-      for n in neighbours(pos)
-        next unless valid?(grid, n)
-        next if closed.include?(n)
-        new_cost = cost + grid[n[1]][n[0]]
-        next if open.include?(n) && open[n] <= new_cost
-        open[n] = new_cost
+      for x2, y2 in [[x, y - 1], [x - 1, y], [x + 1, y], [x, y + 1]]
+        next unless y2 >= 0 && y2 < grid.size && x2 >= 0 && x2 < grid[y2].size
+        new_cost = cost[y][x] + grid[y2][x2]
+        if new_cost < cost[y2][x2]
+          cost[y2][x2] = new_cost
+          open << [x2, y2, new_cost]
+        end
       end
     end
   end
