@@ -1,74 +1,77 @@
 class Heap
-  def self.[](*values)
-    new(values)
-  end
-
-  def initialize(values = [], &block)
-    @values = values
+  def initialize(values = nil, &block)
+    @array = [nil]
     @block = block
-    if @values.size > 1
-      parent(@values.size - 1).downto(0) do |i|
-        heapify_down(i)
-      end
+    unless values.nil?
+      @array.concat(values)
+      last_parent = (@array.size - 1) << 1
+      last_parent.downto(1) { |i| heapify_down(i) }
     end
   end
 
-  def empty?; @values.empty?; end
-  def size; @values.size; end
+  def empty?
+    @array.size == 1
+  end
+
+  def size
+    @array.size - 1
+  end
 
   def peek
-    @values[0]
+    @array[1]
   end
 
   def pop
-    return @values.pop if @values.size <= 1
-    value = @values[0]
-    @values[0] = @values.pop
-    heapify_down(0)
+    return nil if @array.size == 1
+    swap(1, @array.size - 1)
+    value = @array.pop
+    heapify_down(1)
     value
   end
 
   def <<(value)
-    @values << value
-    heapify_up(@values.size - 1)
+    @array << value
+    heapify_up(@array.size - 1)
     self
   end
 
   def heapify_up(i)
-    value = @values[i]
-    while i > 0
-      p = parent(i)
-      break if compare(value, @values[p]) >= 0
-      @values[i] = @values[p]
+    while i > 1
+      p = i >> 1
+      return if min(i, p) == p
+      swap(i, p)
       i = p
     end
-    @values[i] = value
   end
 
   def heapify_down(i)
-    value = @values[i]
     loop do
-      l = left_child(i)
-      break unless l < @values.size
-      r = right_child(i)
-      if r < @values.size && compare(@values[r], @values[l]) < 0
-        break if compare(value, @values[r]) <= 0
-        @values[i] = @values[r]
-        i = r
+      l = (i << 1) | 0
+      r = (i << 1) | 1
+      if r < @array.size
+        c = min(l, r)
+      elsif l < @array.size
+        c = l
       else
-        break if compare(value, @values[l]) <= 0
-        @values[i] = @values[l]
-        i = l
+        break
       end
+      return if min(i, c) == i
+      swap(i, c)
+      i = c
     end
-    @values[i] = value
   end
 
-  def compare(a, b)
-    @block.nil? ? a <=> b : @block.call(a, b)
+  def min(l, r)
+    if @block.nil?
+      @array[l] < @array[r] ? l : r
+    else
+      @block.call(@array[l], @array[r]) < 0 ? l : r
+    end
   end
 
-  def parent(i); (i - 1) / 2; end
-  def left_child(i); 2 * i + 1; end
-  def right_child(i); 2 * i + 2; end
+  def swap(l, r)
+    t = @array[l]
+    @array[l] = @array[r]
+    @array[r] = t
+  end
 end
