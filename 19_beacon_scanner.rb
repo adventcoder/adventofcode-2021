@@ -47,41 +47,56 @@ def distance(a, b)
   3.times.inject(0) { |sum, i| sum + (a[i] - b[i]).abs }
 end
 
-# Returns the location for the bs scanner relative to a if it can be determined or nil otherwise.
-# This is super slow btw.
-def overlap(as, bs)
+def match(as, bs)
+  h = Hash.new { |h, k| h[k] = [] }
+  for oa in as
+    for a in as
+      h[vsub(a, oa)] << oa
+    end
+  end
   for rotation in ROTATIONS
     bs_prime = bs.map(&rotation)
-    for oa in as
-      a_deltas = as.map { |a| vsub(a, oa) }
-      for ob in bs_prime
-        b_deltas = bs_prime.map { |b| vsub(b, ob) }
-        if (a_deltas & b_deltas).size >= 12
-          origin = vsub(oa, ob)
-          return origin, bs_prime.map { |b| vadd(origin, b) }
+    for ob in bs_prime
+      counts = Hash.new(0)
+      for b in bs_prime
+        for oa in h[vsub(b, ob)]
+          counts[oa] += 1
         end
+      end
+      oa, _ = counts.find { |_, n| n >= 12 }
+      if oa
+        origin = vsub(oa, ob)
+        return origin, bs_prime.map { |b| vadd(origin, b) }
       end
     end
   end
   nil
 end
 
-scanners = parse_scanners(get_input(19))
-mapped_scanners = [scanners.first]
-remaining_scanners = scanners.drop(1)
-origins = [[0,0,0]]
-for as in mapped_scanners
-  next_remaining_scanners = []
-  for bs in remaining_scanners
-    if pair = overlap(as, bs)
-      origins << pair[0]
-      mapped_scanners << pair[1]
-    else
-      next_remaining_scanners << bs
+def merge(scanners)
+  queue = [scanners.first]
+  remaining = scanners.drop(1)
+  origins = [[0,0,0]]
+  result = []
+  until queue.empty?
+    as = queue.shift
+    next_remaining = []
+    for bs in remaining
+      if pair = match(as, bs)
+        origins << pair[0]
+        result |= pair[1]
+        queue << pair[1]
+      else
+        next_remaining << bs
+      end
     end
+    remaining = next_remaining
+    p [queue.size, remaining.size]
   end
-  remaining_scanners = next_remaining_scanners
-  p [mapped_scanners.size, remaining_scanners.size]
+  return result, origins
 end
-puts mapped_scanners.inject([], &:|).size
+
+scanners = parse_scanners(get_input(19))
+result, origins = merge(scanners)
+puts result.size
 puts origins.combination(2).map { |a, b| distance(a, b) }.max
