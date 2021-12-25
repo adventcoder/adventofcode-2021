@@ -60,13 +60,13 @@ def make_constraints(args)
   args.each_with_index do |(q, a, b), i|
     x = stack.last
     stack.pop unless q == 1
-    if a > 0
-      # x = d[i] + b
-      stack << [i, b]
-    else
+    if !x.nil? && (x[1] + a).between?(-8, 8) && q == 26
       j, b = x
       # x + a == d[i]
       constraints << [j, i, a + b]
+    else
+      # x = d[i] + b
+      stack << [i, b]
     end
   end
   constraints
