@@ -36,24 +36,6 @@ def parse(input)
   end
 end
 
-def check(args, n)
-  digits = []
-  args.size.times do
-    digits << n % 10
-    n /= 10
-  end
-  z = [0]
-  for q, a, b in args
-    w = digits.pop
-    x = z.last + a
-    z.pop unless q == 1
-    if x != w
-      z << w + b
-    end
-  end
-  z
-end
-
 def make_constraints(args)
   stack = []
   constraints = []
@@ -84,8 +66,6 @@ def minmax(constraints)
   end
   [min.join, max.join]
 end
-
-input = get_input(24)
 
 def check(input, num)
   digits = num.chars.map(&:to_i)
