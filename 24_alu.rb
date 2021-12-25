@@ -85,6 +85,36 @@ def minmax(constraints)
   [min.join, max.join]
 end
 
-a, b = minmax(make_constraints(parse(get_input(24))))
+input = get_input(24)
+
+def check(input, num)
+  digits = num.chars.map(&:to_i)
+  nullary_ops = {
+    'inp' => lambda { digits.shift || raise }
+  }
+  binary_ops = {
+    'add' => lambda { |a, b| a + b },
+    'mul' => lambda { |a, b| a * b },
+    'div' => lambda { |a, b| (a.to_f / b).truncate },
+    'mod' => lambda { |a, b| a < 0 || b < 0 ? raise : a % b },
+    'eql' => lambda { |a, b| a == b ? 1 : 0 }
+  }
+  mem = Hash.new(0)
+  input.each_line do |line|
+    args = line.split
+    if nullary_ops.has_key?(args[0])
+      mem[args[1]] = nullary_ops[args[0]].call
+    elsif binary_ops.has_key?(args[0])
+      val =  Integer(args[2]) rescue mem[args[2]]
+      mem[args[1]] = binary_ops[args[0]].call(mem[args[1]], val)
+    else
+      raise
+    end
+  end
+  mem['z']
+end
+
+input = get_input(24)
+a, b = minmax(make_constraints(parse(input)))
 puts "Part 1: #{b}"
 puts "Part 2: #{a}"
